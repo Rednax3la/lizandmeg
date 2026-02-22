@@ -625,4 +625,134 @@
 
   <div class="gold-rule" style="margin-top:32px"><span>❧</span></div>
 
-  <p class="footer">Made with love &nbsp;·&nbsp; Happy Birthday
+  <p class="footer">Made with love &nbsp;·&nbsp; Happy Birthday, Aunt Lizzie &amp; Aunt Maggie 🌸</p>
+
+</div><!-- /page -->
+
+<!-- CANVAS CONFETTI -->
+<script>
+// ── PETALS / CONFETTI CANVAS ──
+const petalsCanvas = document.getElementById('petals');
+const pc = petalsCanvas.getContext('2d');
+let petals = [];
+function resizeCanvas() {
+  petalsCanvas.width  = window.innerWidth;
+  petalsCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+function spawnPetals(count = 80) {
+  const colors = ['#f9a8d4','#fde68a','#bbf7d0','#c4b5fd','#fca5a5','#e8c47a','#6ee7b7'];
+  for (let i = 0; i < count; i++) {
+    petals.push({
+      x: Math.random() * petalsCanvas.width,
+      y: Math.random() * -petalsCanvas.height * 0.6 - 10,
+      r: 4 + Math.random() * 7,
+      vy: 0.8 + Math.random() * 2.5,
+      vx: -0.8 + Math.random() * 1.6,
+      rot: Math.random() * 360,
+      vr: -2 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 0.85 + Math.random() * 0.15,
+      life: 0,
+      maxLife: 240 + Math.random() * 80
+    });
+  }
+}
+
+function petalLoop() {
+  pc.clearRect(0, 0, petalsCanvas.width, petalsCanvas.height);
+  petals = petals.filter(p => p.life < p.maxLife);
+  for (const p of petals) {
+    p.life++;
+    p.y  += p.vy;
+    p.x  += p.vx + Math.sin((p.y + p.rot) / 30) * 0.6;
+    p.rot += p.vr;
+    const fade = Math.min(1, (p.maxLife - p.life) / 40);
+    pc.save();
+    pc.globalAlpha = p.alpha * fade;
+    pc.translate(p.x, p.y);
+    pc.rotate(p.rot * Math.PI / 180);
+    // petal shape
+    pc.beginPath();
+    pc.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
+    pc.fillStyle = p.color;
+    pc.fill();
+    pc.restore();
+  }
+  requestAnimationFrame(petalLoop);
+}
+petalLoop();
+// Gentle ambient petals
+setInterval(() => { if (petals.length < 30) spawnPetals(6); }, 800);
+
+// ── CANDLES ──
+const candleRow = document.getElementById('candleRow');
+for (let i = 0; i < 8; i++) {
+  const c = document.createElement('div');
+  c.className = 'candle';
+  c.title = 'Blow!';
+  c.innerHTML = `
+    <div class="flame"></div>
+    <div class="wick"></div>
+    <div class="candle-body"></div>
+    <div class="drip"></div>
+  `;
+  c.addEventListener('click', () => {
+    c.classList.toggle('out');
+    if (!c.classList.contains('out')) c.classList.remove('out');
+    // Check if all blown out
+    const all = document.querySelectorAll('.candle');
+    if ([...all].every(x => x.classList.contains('out'))) {
+      setTimeout(() => { spawnPetals(120); chime(); }, 200);
+    }
+  });
+  candleRow.appendChild(c);
+}
+
+// ── CHIME ──
+let audioCtx;
+function chime() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.51];
+  notes.forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const delay = i * 0.18;
+    const now = audioCtx.currentTime;
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, now + delay);
+    g.gain.linearRampToValueAtTime(0.10, now + delay + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, now + delay + 1.4);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now + delay); o.stop(now + delay + 1.5);
+  });
+}
+
+document.getElementById('chimeBtn').addEventListener('click', chime);
+document.getElementById('confettiBtn').addEventListener('click', () => { spawnPetals(130); chime(); });
+
+// ── THEME ──
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  themeBtn.textContent = document.body.classList.contains('dark') ? '☀️ Light mode' : '🌙 Dark mode';
+});
+
+// ── DOWNLOAD ──
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'Happy-Birthday-Lizzie-Maggie.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// ── WELCOME BURST ──
+setTimeout(() => { spawnPetals(90); }, 500);
+</script>
+</body>
+    </html>
